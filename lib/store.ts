@@ -87,6 +87,34 @@ const DEFAULT_DATA: SiteData = {
 
 const STORAGE_KEY = 'anniversary-site-data'
 
+// Load data from server
+export async function loadServerData(): Promise<SiteData | null> {
+  try {
+    const response = await fetch('/api/data')
+    if (response.ok) {
+      const data = await response.json()
+      return data ? { ...DEFAULT_DATA, ...data } : null
+    }
+  } catch {
+    // ignore
+  }
+  return null
+}
+
+// Save data to server
+export async function saveToServer(data: SiteData): Promise<boolean> {
+  try {
+    const response = await fetch('/api/data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
 export function getSiteData(): SiteData {
   if (typeof window === 'undefined') return DEFAULT_DATA
   try {

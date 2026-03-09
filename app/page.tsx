@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { getSiteData, type SiteData } from '@/lib/store'
+import { getSiteData, loadServerData, type SiteData } from '@/lib/store'
 import { Countdown } from '@/components/anniversary/countdown'
 import { NicknameSelect } from '@/components/anniversary/nickname-select'
 import { GuessSlide } from '@/components/anniversary/guess-slide'
@@ -25,8 +25,15 @@ export default function AnniversaryPage() {
   const [data, setData] = useState<SiteData | null>(null)
   const [startMusic, setStartMusic] = useState(false)
 
-  const loadData = useCallback(() => {
-    setData(getSiteData())
+  const loadData = useCallback(async () => {
+    // Try to load from server first
+    const serverData = await loadServerData()
+    if (serverData) {
+      setData(serverData)
+    } else {
+      // Fallback to localStorage
+      setData(getSiteData())
+    }
   }, [])
 
   useEffect(() => {

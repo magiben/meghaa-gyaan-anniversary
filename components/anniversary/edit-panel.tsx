@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { type SiteData, getSiteData, saveSiteData } from '@/lib/store'
+import { type SiteData, getSiteData, saveSiteData, loadServerData, saveToServer } from '@/lib/store'
 
 interface EditPanelProps {
   onDataChange: () => void
@@ -14,9 +14,19 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
   const [data, setData] = useState<SiteData>(getSiteData())
   const [passwordInput, setPasswordInput] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
 
   useEffect(() => {
-    setData(getSiteData())
+    const loadData = async () => {
+      const serverData = await loadServerData()
+      if (serverData) {
+        setData(serverData)
+      } else {
+        setData(getSiteData())
+      }
+    }
+    loadData()
   }, [isOpen])
 
   const save = useCallback(
@@ -28,6 +38,24 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
     },
     [data, onDataChange]
   )
+
+  const handleSaveToServer = async () => {
+    setIsSaving(true)
+    setSaveMessage('')
+    try {
+      const success = await saveToServer(data)
+      if (success) {
+        setSaveMessage('✓ Saved successfully! Changes are now visible to everyone.')
+        setTimeout(() => setSaveMessage(''), 3000)
+      } else {
+        setSaveMessage('✗ Failed to save. Please try again.')
+      }
+    } catch {
+      setSaveMessage('✗ Failed to save. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
   const handleOpen = () => {
     if (data.passwordProtected && data.editPassword && !isAuthenticated) {
@@ -648,12 +676,42 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
               </div>
             </div>
 
-            {/* Footer */}
+            {/* Footer with Save Button */}
             <div
-              className="border-t px-5 py-3 text-center text-xs"
-              style={{ borderColor: '#E8DCCF', color: '#8B6F5C' }}
+              className="border-t px-5 py-3"
+              style={{ borderColor: '#E8DCCF' }}
             >
-              Changes save automatically
+              <button
+                onClick={handleSaveToServer}
+                disabled={isSaving}
+                className="w-full rounded-lg py-3 font-medium transition-all"
+                style={{
+                  backgroundColor: isSaving ? '#E8DCCF' : '#D8A7B1',
+                  color: '#FFFFFF',
+                  fontFamily: 'var(--font-inter)',
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  opacity: isSaving ? 0.6 : 1,
+                }}
+              >
+                {isSaving ? 'Saving...' : 'Save Changes'}
+              </button>
+              {saveMessage && (
+                <p
+                  className="mt-2 text-center text-sm"
+                  style={{
+                    color: saveMessage.startsWith('✓') ? '#4A7C59' : '#e8886f',
+                    fontFamily: 'var(--font-inter)',
+                  }}
+                >
+                  {saveMessage}
+                </p>
+              )}
+              <p
+                className="mt-2 text-center text-xs"
+                style={{ color: '#8B6F5C' }}
+              >
+                Changes are saved locally. Click "Save Changes" to make them visible to everyone.
+              </p>
             </div>
           </motion.div>
         )}
