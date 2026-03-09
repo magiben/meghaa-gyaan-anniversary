@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { getSiteData, loadServerData, type SiteData } from '@/lib/store'
+import { getSiteData, saveSiteData, type SiteData } from '@/lib/store'
+import { loadDataFromURL } from '@/lib/share-utils'
 import { Countdown } from '@/components/anniversary/countdown'
 import { NicknameSelect } from '@/components/anniversary/nickname-select'
 import { GuessSlide } from '@/components/anniversary/guess-slide'
@@ -25,15 +26,18 @@ export default function AnniversaryPage() {
   const [data, setData] = useState<SiteData | null>(null)
   const [startMusic, setStartMusic] = useState(false)
 
-  const loadData = useCallback(async () => {
-    // Try to load from server first
-    const serverData = await loadServerData()
-    if (serverData) {
-      setData(serverData)
-    } else {
-      // Fallback to localStorage
-      setData(getSiteData())
+  const loadData = useCallback(() => {
+    // Priority 1: Check URL parameter (shared link)
+    const urlData = loadDataFromURL()
+    if (urlData) {
+      setData(urlData)
+      // Save to localStorage so it persists
+      saveSiteData(urlData)
+      return
     }
+    
+    // Priority 2: Load from localStorage
+    setData(getSiteData())
   }, [])
 
   useEffect(() => {

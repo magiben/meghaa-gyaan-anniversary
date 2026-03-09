@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { type SiteData, getSiteData, saveSiteData, loadServerData, saveToServer } from '@/lib/store'
+import { type SiteData, getSiteData, saveSiteData } from '@/lib/store'
+import { generateShareLink } from '@/lib/share-utils'
 
 interface EditPanelProps {
   onDataChange: () => void
@@ -14,19 +15,10 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
   const [data, setData] = useState<SiteData>(getSiteData())
   const [passwordInput, setPasswordInput] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
 
   useEffect(() => {
-    const loadData = async () => {
-      const serverData = await loadServerData()
-      if (serverData) {
-        setData(serverData)
-      } else {
-        setData(getSiteData())
-      }
-    }
-    loadData()
+    setData(getSiteData())
   }, [isOpen])
 
   const save = useCallback(
@@ -39,21 +31,18 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
     [data, onDataChange]
   )
 
-  const handleSaveToServer = async () => {
-    setIsSaving(true)
-    setSaveMessage('')
+  const handleGenerateShareLink = () => {
     try {
-      const result = await saveToServer(data)
-      if (result.success) {
-        setSaveMessage('✓ Saved successfully! Changes are now visible to everyone.')
+      const shareLink = generateShareLink(data)
+      if (shareLink) {
+        navigator.clipboard.writeText(shareLink)
+        setSaveMessage('✓ Share link copied! Send this to your partner.')
         setTimeout(() => setSaveMessage(''), 5000)
       } else {
-        setSaveMessage(`✗ Failed to save: ${result.error || 'Unknown error'}`)
+        setSaveMessage('✗ Failed - content might be too large. Try compressing images/videos.')
       }
-    } catch (error: any) {
-      setSaveMessage(`✗ Failed to save: ${error.message || 'Network error'}`)
-    } finally {
-      setIsSaving(false)
+    } catch (error) {
+      setSaveMessage('✗ Failed to generate share link')
     }
   }
 
@@ -664,7 +653,26 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
                 {/* Settings Tab */}
                 {activeTab === 'settings' && (
                   <>
-                    <div className="flex items-center gap-2">
+                    <div
+                      className="rounded-lg border p-4"
+                      style={{ borderColor: '#E8DCCF', backgroundColor: '#FFF9F0' }}
+                    >
+                      <p style={{ ...labelStyle, marginBottom: '12px', fontSize: '0.9rem', color: '#4A3728' }}>
+                        📤 Share with Your Partner
+                      </p>
+                      <button 
+                        onClick={handleGenerateShareLink} 
+                        className="w-full"
+                        style={{ ...btnStyle, backgroundColor: '#4A7C59', padding: '12px 14px', fontSize: '0.9rem' }}
+                      >
+                        🔗 Generate Share Link
+                      </button>
+                      <p className="mt-3 text-xs leading-relaxed" style={{ color: '#8B6F5C' }}>
+                        Click the button above to create a special link. Send this link to your partner and they'll see all your photos, videos, and messages!
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 mt-4">
                       <input
                         type="checkbox"
                         checked={data.passwordProtected}
@@ -691,41 +699,28 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
               </div>
             </div>
 
-            {/* Footer with Save Button */}
+            {/* Footer */}
             <div
-              className="border-t px-5 py-3"
-              style={{ borderColor: '#E8DCCF' }}
+              className="border-t px-5 py-4"
+              style={{ borderColor: '#E8DCCF', backgroundColor: '#FFF9F0' }}
             >
-              <button
-                onClick={handleSaveToServer}
-                disabled={isSaving}
-                className="w-full rounded-lg py-3 font-medium transition-all"
-                style={{
-                  backgroundColor: isSaving ? '#E8DCCF' : '#D8A7B1',
-                  color: '#FFFFFF',
-                  fontFamily: 'var(--font-inter)',
-                  cursor: isSaving ? 'not-allowed' : 'pointer',
-                  opacity: isSaving ? 0.6 : 1,
-                }}
-              >
-                {isSaving ? 'Saving...' : 'Save Changes'}
-              </button>
               {saveMessage && (
                 <p
-                  className="mt-2 text-center text-sm"
+                  className="text-center text-sm mb-3"
                   style={{
                     color: saveMessage.startsWith('✓') ? '#4A7C59' : '#e8886f',
                     fontFamily: 'var(--font-inter)',
+                    fontWeight: '500',
                   }}
                 >
                   {saveMessage}
                 </p>
               )}
               <p
-                className="mt-2 text-center text-xs"
+                className="text-center text-xs leading-relaxed"
                 style={{ color: '#8B6F5C' }}
               >
-                Changes are saved locally as you edit. Click "Save Changes" to make them visible to everyone who visits this website.
+                Your changes save automatically. When you're done, go to Settings → Generate Share Link to create a link for your partner.
               </p>
             </div>
           </motion.div>
