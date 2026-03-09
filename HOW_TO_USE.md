@@ -9,16 +9,26 @@
 4. Edit the text messages to personalize them
 5. Changes save automatically as you work
 
-### Step 2: Generate Share Link
+### Step 2: Generate Short Share Link
 1. Go to the **"Settings"** tab in the edit panel
 2. Click **"🔗 Generate Share Link"**
-3. The link is automatically copied to your clipboard
-4. You'll see a message: "✓ Share link copied! Send this to your partner."
+3. Wait a moment while the short link is created
+4. The link is automatically copied to your clipboard
+5. You'll see a message: "✓ Short link copied! Send this to your partner."
 
 ### Step 3: Send to Your Partner
 1. Paste the link in WhatsApp, Email, SMS, or any messaging app
 2. Send it to your partner
 3. When they click the link, they'll see everything you uploaded!
+
+## Example Short Link
+
+Instead of a very long URL, you'll get something like:
+```
+https://your-website.com?id=aB3xY9zK
+```
+
+Much easier to share! 🎉
 
 ## That's It!
 
@@ -47,20 +57,20 @@ Use online tools like TinyPNG (for images) or HandBrake (for videos) to compress
 
 ## Troubleshooting
 
-**Q: The share link is very long, is that normal?**  
-A: Yes! The link contains all your content encoded in it. That's why it works without needing a database.
+**Q: How long is the short link?**  
+A: Very short! Just your website URL + 8 characters. Example: `yoursite.com?id=aB3xY9zK`
 
 **Q: Can I update the content after sending the link?**  
-A: Yes! Just make your changes, generate a new link, and send the new link.
+A: Yes! Just make your changes and generate a new link. The old link will still show the old content.
 
 **Q: Will the link stop working after some time?**  
-A: No! The link will work forever because all the content is in the URL itself.
+A: The link works as long as your website is deployed. If you redeploy, you may need to generate a new link.
 
 **Q: My partner says the link doesn't work**  
-A: Make sure the entire link was copied. Sometimes messaging apps truncate long links. Try sending it in multiple messages or use a URL shortener.
+A: Make sure they're clicking the complete link. Try sending it again or test it yourself first.
 
 **Q: The "Generate Share Link" button says "Failed"**  
-A: Your content might be too large. Try compressing your images and videos more, or use fewer files.
+A: Try again. If it keeps failing, check your internet connection or try refreshing the page.
 
 ## Need Help?
 

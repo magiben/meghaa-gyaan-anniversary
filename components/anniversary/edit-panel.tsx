@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { type SiteData, getSiteData, saveSiteData } from '@/lib/store'
-import { generateShareLink } from '@/lib/share-utils'
+import { saveAndGetShortLink } from '@/lib/share-utils'
 
 interface EditPanelProps {
   onDataChange: () => void
@@ -16,6 +16,7 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
   const [passwordInput, setPasswordInput] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false)
 
   useEffect(() => {
     setData(getSiteData())
@@ -31,18 +32,22 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
     [data, onDataChange]
   )
 
-  const handleGenerateShareLink = () => {
+  const handleGenerateShareLink = async () => {
+    setIsGeneratingLink(true)
+    setSaveMessage('')
     try {
-      const shareLink = generateShareLink(data)
+      const shareLink = await saveAndGetShortLink(data)
       if (shareLink) {
         navigator.clipboard.writeText(shareLink)
-        setSaveMessage('✓ Share link copied! Send this to your partner.')
+        setSaveMessage('✓ Short link copied! Send this to your partner.')
         setTimeout(() => setSaveMessage(''), 5000)
       } else {
-        setSaveMessage('✗ Failed - content might be too large. Try compressing images/videos.')
+        setSaveMessage('✗ Failed to generate link. Please try again.')
       }
     } catch (error) {
       setSaveMessage('✗ Failed to generate share link')
+    } finally {
+      setIsGeneratingLink(false)
     }
   }
 
@@ -661,11 +666,19 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
                         📤 Share with Your Partner
                       </p>
                       <button 
-                        onClick={handleGenerateShareLink} 
+                        onClick={handleGenerateShareLink}
+                        disabled={isGeneratingLink}
                         className="w-full"
-                        style={{ ...btnStyle, backgroundColor: '#4A7C59', padding: '12px 14px', fontSize: '0.9rem' }}
+                        style={{ 
+                          ...btnStyle, 
+                          backgroundColor: isGeneratingLink ? '#E8DCCF' : '#4A7C59', 
+                          padding: '12px 14px', 
+                          fontSize: '0.9rem',
+                          cursor: isGeneratingLink ? 'not-allowed' : 'pointer',
+                          opacity: isGeneratingLink ? 0.6 : 1,
+                        }}
                       >
-                        🔗 Generate Share Link
+                        {isGeneratingLink ? '⏳ Generating...' : '🔗 Generate Share Link'}
                       </button>
                       <p className="mt-3 text-xs leading-relaxed" style={{ color: '#8B6F5C' }}>
                         Click the button above to create a special link. Send this link to your partner and they'll see all your photos, videos, and messages!

@@ -1,46 +1,55 @@
 import { SiteData } from './store'
 
-// Compress data for URL sharing
-export function compressData(data: SiteData): string {
+// Save data to server and get short ID
+export async function saveAndGetShortLink(data: SiteData): Promise<string | null> {
   try {
-    const json = JSON.stringify(data)
-    // Use base64 encoding for URL safety
-    const base64 = btoa(encodeURIComponent(json))
-    return base64
+    const response = await fetch('/api/share', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+    
+    if (!response.ok) {
+      return null
+    }
+    
+    const result = await response.json()
+    
+    if (result.success && result.id) {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      return `${baseUrl}?id=${result.id}`
+    }
+    
+    return null
   } catch (error) {
-    console.error('Failed to compress data:', error)
-    return ''
-  }
-}
-
-// Decompress data from URL
-export function decompressData(compressed: string): SiteData | null {
-  try {
-    const json = decodeURIComponent(atob(compressed))
-    return JSON.parse(json)
-  } catch (error) {
-    console.error('Failed to decompress data:', error)
+    console.error('Failed to save and get short link:', error)
     return null
   }
 }
 
-// Generate shareable link
-export function generateShareLink(data: SiteData): string {
-  const compressed = compressData(data)
-  if (!compressed) return ''
-  
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-  return `${baseUrl}?data=${compressed}`
+// Load data from server using short ID
+export async function loadDataFromShortId(id: string): Promise<SiteData | null> {
+  try {
+    const response = await fetch(`/api/share?id=${id}`)
+    
+    if (!response.ok) {
+      return null
+    }
+    
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Failed to load data from short ID:', error)
+    return null
+  }
 }
 
-// Load data from URL parameter
-export function loadDataFromURL(): SiteData | null {
-  if (typeof window === 'undefined') return null
+// Load data from URL parameter (check for short ID)
+export function loadDataFromURL(): { data: SiteData | null; id: string | null } {
+  if (typeof window === 'undefined') return { data: null, id: null }
   
   const params = new URLSearchParams(window.location.search)
-  const dataParam = params.get('data')
+  const id = params.get('id')
   
-  if (!dataParam) return null
-  
-  return decompressData(dataParam)
+  return { data: null, id }
 }

@@ -12,15 +12,16 @@ A beautiful anniversary website where you can upload photos, videos, and persona
    - Add photos (max 10MB each)
    - Add videos (max 10MB each)
    - Edit all text messages
-4. **Generate share link:**
+4. **Generate short share link:**
    - Go to "Settings" tab
    - Click "🔗 Generate Share Link"
-   - Link is copied to clipboard
+   - Short link is created and copied to clipboard
+   - Example: `yoursite.com?id=aB3xY9zK`
 5. **Send the link** to your partner via WhatsApp, Email, SMS, etc.
 
 ### For the Partner:
 
-1. **Click the link** you received
+1. **Click the short link** you received
 2. **See everything** - all photos, videos, and messages
 3. **No configuration needed** - just click and view!
 
@@ -30,9 +31,10 @@ A beautiful anniversary website where you can upload photos, videos, and persona
 - 🎥 Upload videos
 - ✍️ Customize all text content
 - 🎵 Add background music
-- 🔗 Generate shareable link
+- 🔗 Generate short shareable link (e.g., `yoursite.com?id=aB3xY9zK`)
 - 💝 Beautiful animations and design
 - 📱 Works on all devices
+- ⚡ Fast and lightweight
 
 ## Setup
 
@@ -49,8 +51,8 @@ Deploy to Vercel, Netlify, or any hosting platform. The share link system works 
 
 - Compress images to keep them under 2MB for best performance
 - Compress videos to keep them under 5MB
-- Use the share link feature to send your content to anyone
-- The link contains all your content - no server storage needed!
+- Use the short link feature - much easier to share!
+- The short link is stored on the server, so it works even after redeployment
 
 ## Tech Stack
 
