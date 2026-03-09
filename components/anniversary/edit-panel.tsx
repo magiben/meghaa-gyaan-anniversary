@@ -17,8 +17,14 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [saveMessage, setSaveMessage] = useState('')
   const [isGeneratingLink, setIsGeneratingLink] = useState(false)
+  const [isViewingSharedLink, setIsViewingSharedLink] = useState(false)
 
   useEffect(() => {
+    // Check if viewing a shared link
+    const params = new URLSearchParams(window.location.search)
+    const hasSharedId = params.has('id')
+    setIsViewingSharedLink(hasSharedId)
+    
     setData(getSiteData())
   }, [isOpen])
 
@@ -178,22 +184,36 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
           >
             {/* Header */}
             <div
-              className="flex items-center justify-between border-b px-5 py-4"
+              className="border-b"
               style={{ borderColor: '#E8DCCF' }}
             >
-              <h3
-                className="text-lg"
-                style={{ fontFamily: 'var(--font-playfair)', color: '#4A3728' }}
-              >
-                Edit Our Story
-              </h3>
-              <button
-                onClick={() => setIsOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full"
-                style={{ backgroundColor: '#E8DCCF', color: '#8B6F5C' }}
-              >
-                &times;
-              </button>
+              <div className="flex items-center justify-between px-5 py-4">
+                <h3
+                  className="text-lg"
+                  style={{ fontFamily: 'var(--font-playfair)', color: '#4A3728' }}
+                >
+                  Edit Our Story
+                </h3>
+                <button
+                  onClick={() => setIsOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full"
+                  style={{ backgroundColor: '#E8DCCF', color: '#8B6F5C' }}
+                >
+                  &times;
+                </button>
+              </div>
+              
+              {/* Viewing Shared Link Notice */}
+              {isViewingSharedLink && (
+                <div
+                  className="px-5 pb-3"
+                  style={{ backgroundColor: '#FFF9F0' }}
+                >
+                  <p className="text-xs" style={{ color: '#8B6F5C' }}>
+                    👀 You're viewing a shared link. To create your own version, visit the website without the ?id= parameter.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Tabs */}

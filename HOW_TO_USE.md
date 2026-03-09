@@ -60,6 +60,15 @@ Use online tools like TinyPNG (for images) or HandBrake (for videos) to compress
 **Q: How long is the short link?**  
 A: Very short! Just your website URL + 8 characters. Example: `yoursite.com?id=aB3xY9zK`
 
+**Q: I clicked my friend's link but see my old photos instead of theirs**  
+A: This was a bug that's now fixed! The link should always show the correct content. If you still see old content:
+1. Clear your browser cache
+2. Try opening the link in an incognito/private window
+3. Or visit the website without the `?id=` part to start fresh
+
+**Q: Can I edit content when viewing a shared link?**  
+A: When you open a shared link (with `?id=` in the URL), you're viewing someone else's content. To create your own version, visit your website URL without the `?id=` parameter.
+
 **Q: Can I update the content after sending the link?**  
 A: Yes! Just make your changes and generate a new link. The old link will still show the old content.
 

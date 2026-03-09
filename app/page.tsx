@@ -27,19 +27,20 @@ export default function AnniversaryPage() {
   const [startMusic, setStartMusic] = useState(false)
 
   const loadData = useCallback(async () => {
-    // Priority 1: Check URL parameter for short ID
+    // Check URL parameter for short ID
     const { id } = loadDataFromURL()
+    
     if (id) {
+      // If there's an ID in the URL, ALWAYS load from server
+      // This ensures shared links show the correct content
       const urlData = await loadDataFromShortId(id)
       if (urlData) {
         setData(urlData)
-        // Save to localStorage so it persists
-        saveSiteData(urlData)
         return
       }
     }
     
-    // Priority 2: Load from localStorage
+    // Only load from localStorage if there's NO URL parameter
     setData(getSiteData())
   }, [])
 
@@ -48,6 +49,10 @@ export default function AnniversaryPage() {
   }, [loadData])
 
   useEffect(() => {
+    // Only listen to storage updates if there's no URL parameter
+    const { id } = loadDataFromURL()
+    if (id) return // Don't reload from storage if viewing a shared link
+    
     const handler = () => loadData()
     window.addEventListener('site-data-updated', handler)
     return () => window.removeEventListener('site-data-updated', handler)
