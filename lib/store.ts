@@ -90,28 +90,51 @@ const STORAGE_KEY = 'anniversary-site-data'
 // Load data from server
 export async function loadServerData(): Promise<SiteData | null> {
   try {
-    const response = await fetch('/api/data')
+    // Try API first
+    const response = await fetch('/api/save', { cache: 'no-store' })
     if (response.ok) {
       const data = await response.json()
-      return data ? { ...DEFAULT_DATA, ...data } : null
+      if (data) {
+        return { ...DEFAULT_DATA, ...data }
+      }
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    console.error('Failed to load from API:', error)
   }
+  
+  // Fallback: try loading from public/data/site-data.json directly
+  try {
+    const response = await fetch('/data/site-data.json', { cache: 'no-store' })
+    if (response.ok) {
+      const data = await response.json()
+      return { ...DEFAULT_DATA, ...data }
+    }
+  } catch (error) {
+    console.error('Failed to load from public:', error)
+  }
+  
   return null
 }
 
 // Save data to server
-export async function saveToServer(data: SiteData): Promise<boolean> {
+export async function saveToServer(data: SiteData): Promise<{ success: boolean; error?: string }> {
   try {
-    const response = await fetch('/api/data', {
+    const response = await fetch('/api/save', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
-    return response.ok
-  } catch {
-    return false
+    
+    const result = await response.json()
+    
+    if (response.ok && result.success) {
+      return { success: true }
+    } else {
+      return { success: false, error: result.error || 'Failed to save' }
+    }
+  } catch (error: any) {
+    console.error('Save error:', error)
+    return { success: false, error: error.message || 'Network error' }
   }
 }
 

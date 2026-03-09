@@ -43,15 +43,15 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
     setIsSaving(true)
     setSaveMessage('')
     try {
-      const success = await saveToServer(data)
-      if (success) {
+      const result = await saveToServer(data)
+      if (result.success) {
         setSaveMessage('✓ Saved successfully! Changes are now visible to everyone.')
-        setTimeout(() => setSaveMessage(''), 3000)
+        setTimeout(() => setSaveMessage(''), 5000)
       } else {
-        setSaveMessage('✗ Failed to save. Please try again.')
+        setSaveMessage(`✗ Failed to save: ${result.error || 'Unknown error'}`)
       }
-    } catch {
-      setSaveMessage('✗ Failed to save. Please try again.')
+    } catch (error: any) {
+      setSaveMessage(`✗ Failed to save: ${error.message || 'Network error'}`)
     } finally {
       setIsSaving(false)
     }
@@ -76,6 +76,21 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (file) {
+        // Check file size (10MB = 10 * 1024 * 1024 bytes)
+        const maxSize = 10 * 1024 * 1024
+        if (file.size > maxSize) {
+          alert(`File is too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Please use a file smaller than 10MB.`)
+          return
+        }
+        
+        // Show size warning for files over 5MB
+        if (file.size > 5 * 1024 * 1024) {
+          const proceed = confirm(
+            `This file is ${(file.size / 1024 / 1024).toFixed(2)}MB. Large files may take time to save. Continue?`
+          )
+          if (!proceed) return
+        }
+        
         const reader = new FileReader()
         reader.onload = (ev) => {
           callback(ev.target?.result as string)
@@ -710,7 +725,7 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
                 className="mt-2 text-center text-xs"
                 style={{ color: '#8B6F5C' }}
               >
-                Changes are saved locally. Click "Save Changes" to make them visible to everyone.
+                Changes are saved locally as you edit. Click "Save Changes" to make them visible to everyone who visits this website.
               </p>
             </div>
           </motion.div>
