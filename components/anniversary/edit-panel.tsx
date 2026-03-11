@@ -124,10 +124,10 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
           }
         }
         
-        // Check file size (3MB max per file for safety)
-        const maxSize = 3 * 1024 * 1024
+        // Check file size (50MB max per file - plenty of room)
+        const maxSize = 50 * 1024 * 1024
         if (file.size > maxSize) {
-          alert(`File is too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Please use a file smaller than 3MB.`)
+          alert(`File is too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Please use a file smaller than 50MB.`)
           return
         }
         
@@ -143,8 +143,8 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
               let width = img.width
               let height = img.height
               
-              // EXTREME compression - resize to 600px max
-              const maxDimension = 600
+              // Less aggressive compression - 1000px max
+              const maxDimension = 1000
               if (width > maxDimension || height > maxDimension) {
                 if (width > height) {
                   height = (height / width) * maxDimension
@@ -161,8 +161,8 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
               const ctx = canvas.getContext('2d')
               ctx?.drawImage(img, 0, 0, width, height)
               
-              // EXTREME compression - 40% quality
-              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.4)
+              // Better quality - 60%
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.6)
               callback(compressedDataUrl)
             }
             img.src = ev.target?.result as string

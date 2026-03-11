@@ -53,9 +53,9 @@ export async function POST(request: NextRequest) {
     const dataSize = bodyText.length
     console.log(`✓ Received data size: ${(dataSize / 1024 / 1024).toFixed(2)}MB`)
     
-    if (dataSize > 15 * 1024 * 1024) {
+    if (dataSize > 50 * 1024 * 1024) {
       return NextResponse.json(
-        { success: false, error: `Data too large (${(dataSize / 1024 / 1024).toFixed(2)}MB). Maximum 15MB allowed.` },
+        { success: false, error: `Data too large (${(dataSize / 1024 / 1024).toFixed(2)}MB). Maximum 50MB allowed.` },
         { status: 413 }
       )
     }
