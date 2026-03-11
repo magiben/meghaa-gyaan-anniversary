@@ -92,11 +92,19 @@ export function getSiteData(): SiteData {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
-      return { ...DEFAULT_DATA, ...JSON.parse(stored) }
+      const parsed = JSON.parse(stored)
+      console.log('Loaded from localStorage:', Object.keys(parsed))
+      if (parsed.diaryVideo?.src) {
+        console.log('✓ Video found in localStorage:', parsed.diaryVideo.src.substring(0, 50))
+      } else {
+        console.log('✗ No video in localStorage')
+      }
+      return { ...DEFAULT_DATA, ...parsed }
     }
-  } catch {
-    // ignore
+  } catch (error) {
+    console.error('Error loading from localStorage:', error)
   }
+  console.log('Using default data')
   return DEFAULT_DATA
 }
 
@@ -105,10 +113,22 @@ export function saveSiteData(data: Partial<SiteData>): void {
   try {
     const current = getSiteData()
     const updated = { ...current, ...data }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+    const jsonString = JSON.stringify(updated)
+    console.log('Saving to localStorage:', Object.keys(data), 'Total size:', jsonString.length)
+    localStorage.setItem(STORAGE_KEY, jsonString)
+    
+    // Verify it was saved
+    const saved = localStorage.getItem(STORAGE_KEY)
+    if (saved) {
+      console.log('✓ Data saved successfully to localStorage')
+    } else {
+      console.error('✗ Failed to save to localStorage')
+    }
+    
     window.dispatchEvent(new CustomEvent('site-data-updated'))
-  } catch {
-    // ignore
+  } catch (error) {
+    console.error('Error saving to localStorage:', error)
+    alert('Failed to save data. Your video might be too large. Try compressing it to under 3MB.')
   }
 }
 
