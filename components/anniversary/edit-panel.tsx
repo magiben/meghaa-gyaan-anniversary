@@ -124,12 +124,8 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
           }
         }
         
-        // Check file size (50MB max per file - plenty of room)
-        const maxSize = 50 * 1024 * 1024
-        if (file.size > maxSize) {
-          alert(`File is too large (${(file.size / 1024 / 1024).toFixed(2)}MB). Please use a file smaller than 50MB.`)
-          return
-        }
+        // NO file size check - upload anything
+        // Removed size limit
         
         // For images, compress them
         if (fileType === 'image' && file.type.startsWith('image/')) {

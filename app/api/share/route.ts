@@ -1,19 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { put } from '@vercel/blob'
 
 // Configure route
 export const runtime = 'nodejs'
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
 
-// IMPORTANT: This tells Next.js to NOT parse the body automatically
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-}
-
-// Simple in-memory store
-const dataStore = new Map<string, any>()
+// Simple in-memory store for metadata
+const metadataStore = new Map<string, { blobUrl: string }>()
 
 // Generate a short random ID
 function generateShortId(): string {
@@ -25,10 +19,10 @@ function generateShortId(): string {
   return id
 }
 
-// POST: Save data and return short ID
+// POST: Save data to Vercel Blob and return short ID
 export async function POST(request: NextRequest) {
   try {
-    // Read the raw body text (no size limit)
+    // Read the raw body text
     const bodyText = await request.text()
     
     if (!bodyText || bodyText.length === 0) {
@@ -38,32 +32,13 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Parse JSON manually
-    let data
-    try {
-      data = JSON.parse(bodyText)
-    } catch (e) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid JSON data' },
-        { status: 400 }
-      )
-    }
-    
-    // Check data size
     const dataSize = bodyText.length
     console.log(`✓ Received data size: ${(dataSize / 1024 / 1024).toFixed(2)}MB`)
-    
-    if (dataSize > 50 * 1024 * 1024) {
-      return NextResponse.json(
-        { success: false, error: `Data too large (${(dataSize / 1024 / 1024).toFixed(2)}MB). Maximum 50MB allowed.` },
-        { status: 413 }
-      )
-    }
     
     // Generate unique short ID
     let shortId = generateShortId()
     let attempts = 0
-    while (dataStore.has(shortId) && attempts < 10) {
+    while (metadataStore.has(shortId) && attempts < 10) {
       shortId = generateShortId()
       attempts++
     }
@@ -75,10 +50,17 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Store data in memory
-    dataStore.set(shortId, data)
+    // Upload to Vercel Blob Storage (UNLIMITED SIZE!)
+    const blob = await put(`anniversary-data-${shortId}.json`, bodyText, {
+      access: 'public',
+      contentType: 'application/json',
+    })
     
-    console.log(`✓ Saved data with ID: ${shortId}, Size: ${(dataSize / 1024 / 1024).toFixed(2)}MB`)
+    // Store metadata
+    metadataStore.set(shortId, { blobUrl: blob.url })
+    
+    console.log(`✓ Saved to Vercel Blob with ID: ${shortId}, Size: ${(dataSize / 1024 / 1024).toFixed(2)}MB`)
+    console.log(`✓ Blob URL: ${blob.url}`)
     
     return NextResponse.json({ success: true, id: shortId })
   } catch (error: any) {
@@ -90,7 +72,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET: Retrieve data by short ID
+// GET: Retrieve data by short ID from Vercel Blob
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -100,12 +82,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'ID required' }, { status: 400 })
     }
     
-    const data = dataStore.get(id)
+    const metadata = metadataStore.get(id)
     
-    if (!data) {
-      console.log(`❌ Data not found for ID: ${id}`)
+    if (!metadata) {
+      console.log(`❌ Metadata not found for ID: ${id}`)
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
+    
+    // Fetch data from Vercel Blob
+    const response = await fetch(metadata.blobUrl)
+    
+    if (!response.ok) {
+      console.log(`❌ Failed to fetch blob for ID: ${id}`)
+      return NextResponse.json({ error: 'Failed to load data' }, { status: 500 })
+    }
+    
+    const data = await response.json()
     
     console.log(`✓ Retrieved data for ID: ${id}`)
     

@@ -5,15 +5,12 @@ export async function saveAndGetShortLink(data: SiteData): Promise<string | null
   const maxRetries = 3
   let lastError: any = null
   
-  // Check data size before sending - 50MB limit
+  // NO SIZE CHECK - just upload it
   const dataSize = JSON.stringify(data).length
   const dataSizeMB = (dataSize / 1024 / 1024).toFixed(2)
-  console.log(`Preparing to upload ${dataSizeMB}MB of data...`)
+  console.log(`Uploading ${dataSizeMB}MB of data...`)
   
-  if (dataSize > 50 * 1024 * 1024) {
-    alert(`Your data is too large (${dataSizeMB}MB). Maximum is 50MB. Please:\n\n1. Remove some photos/videos\n2. Use shorter videos\n\nCurrent data breakdown:\n- Photos: ${data.photos.filter(p => p.src).length}\n- Video: ${data.diaryVideo.src ? 'Yes' : 'No'}\n- Memories: ${data.memoryBook.filter(m => m.src).length}`)
-    return null
-  }
+  // Removed size check - let the server handle it
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
