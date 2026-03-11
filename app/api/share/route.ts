@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { put, head } from '@vercel/blob'
+
+// Simple in-memory store as fallback
+const dataStore = new Map<string, any>()
 
 // Generate a short random ID
 function generateShortId(): string {
@@ -26,18 +28,9 @@ export async function POST(request: NextRequest) {
     // Generate unique short ID
     let shortId = generateShortId()
     let attempts = 0
-    
-    // Check if ID already exists
-    while (attempts < 10) {
-      try {
-        await head(`anniversary-${shortId}.json`)
-        // ID exists, generate new one
-        shortId = generateShortId()
-        attempts++
-      } catch {
-        // ID doesn't exist, we can use it
-        break
-      }
+    while (dataStore.has(shortId) && attempts < 10) {
+      shortId = generateShortId()
+      attempts++
     }
     
     if (attempts >= 10) {
@@ -47,13 +40,10 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Store data in Vercel Blob
-    const blob = await put(`anniversary-${shortId}.json`, JSON.stringify(data), {
-      access: 'public',
-      contentType: 'application/json',
-    })
+    // Store data in memory (works immediately, no Blob setup needed)
+    dataStore.set(shortId, data)
     
-    console.log(`Saved data with ID: ${shortId}, URL: ${blob.url}`)
+    console.log(`Saved data with ID: ${shortId}, Size: ${JSON.stringify(data).length} bytes`)
     
     return NextResponse.json({ success: true, id: shortId })
   } catch (error: any) {
@@ -75,15 +65,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'ID required' }, { status: 400 })
     }
     
-    // Fetch from Vercel Blob
-    const response = await fetch(`${process.env.BLOB_READ_WRITE_TOKEN ? 'https://blob.vercel-storage.com' : ''}/anniversary-${id}.json`)
+    const data = dataStore.get(id)
     
-    if (!response.ok) {
+    if (!data) {
       console.log(`Data not found for ID: ${id}`)
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
     
-    const data = await response.json()
     console.log(`Retrieved data for ID: ${id}`)
     
     return NextResponse.json(data)
