@@ -34,7 +34,10 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
       setData(updated as SiteData)
       saveSiteData(updated)
       console.log('Data saved:', Object.keys(newData))
+      // Force immediate update
       onDataChange()
+      // Also trigger a custom event for immediate refresh
+      window.dispatchEvent(new CustomEvent('site-data-updated'))
     },
     [data, onDataChange]
   )
@@ -241,7 +244,10 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
                   Edit Our Story
                 </h3>
                 <button
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => {
+                    setIsOpen(false)
+                    onDataChange()
+                  }}
                   className="flex h-8 w-8 items-center justify-center rounded-full"
                   style={{ backgroundColor: '#E8DCCF', color: '#8B6F5C' }}
                 >
