@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Configure route to accept payloads up to 10MB
+// Configure route
 export const runtime = 'nodejs'
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
 
-// Body size configuration for App Router
+// IMPORTANT: This tells Next.js to NOT parse the body automatically
 export const config = {
   api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
+    bodyParser: false,
   },
 }
 
-// Simple in-memory store as fallback
+// Simple in-memory store
 const dataStore = new Map<string, any>()
 
 // Generate a short random ID
@@ -30,31 +28,34 @@ function generateShortId(): string {
 // POST: Save data and return short ID
 export async function POST(request: NextRequest) {
   try {
-    // Check content length
-    const contentLength = request.headers.get('content-length')
-    if (contentLength && parseInt(contentLength) > 10 * 1024 * 1024) {
-      return NextResponse.json(
-        { success: false, error: 'Data too large. Maximum 10MB allowed.' },
-        { status: 413 }
-      )
-    }
+    // Read the raw body text (no size limit)
+    const bodyText = await request.text()
     
-    const data = await request.json()
-    
-    if (!data || Object.keys(data).length === 0) {
+    if (!bodyText || bodyText.length === 0) {
       return NextResponse.json(
         { success: false, error: 'No data provided' },
         { status: 400 }
       )
     }
     
-    // Check actual data size
-    const dataSize = JSON.stringify(data).length
-    console.log(`Received data size: ${(dataSize / 1024 / 1024).toFixed(2)}MB`)
-    
-    if (dataSize > 10 * 1024 * 1024) {
+    // Parse JSON manually
+    let data
+    try {
+      data = JSON.parse(bodyText)
+    } catch (e) {
       return NextResponse.json(
-        { success: false, error: `Data too large (${(dataSize / 1024 / 1024).toFixed(2)}MB). Maximum 10MB allowed.` },
+        { success: false, error: 'Invalid JSON data' },
+        { status: 400 }
+      )
+    }
+    
+    // Check data size
+    const dataSize = bodyText.length
+    console.log(`✓ Received data size: ${(dataSize / 1024 / 1024).toFixed(2)}MB`)
+    
+    if (dataSize > 15 * 1024 * 1024) {
+      return NextResponse.json(
+        { success: false, error: `Data too large (${(dataSize / 1024 / 1024).toFixed(2)}MB). Maximum 15MB allowed.` },
         { status: 413 }
       )
     }
@@ -74,25 +75,16 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Store data in memory (works immediately, no Blob setup needed)
+    // Store data in memory
     dataStore.set(shortId, data)
     
     console.log(`✓ Saved data with ID: ${shortId}, Size: ${(dataSize / 1024 / 1024).toFixed(2)}MB`)
     
     return NextResponse.json({ success: true, id: shortId })
   } catch (error: any) {
-    console.error('Save error:', error)
-    
-    // Check if it's a payload too large error
-    if (error.message?.includes('body') || error.message?.includes('size')) {
-      return NextResponse.json(
-        { success: false, error: 'Data too large. Try compressing images more or using fewer media files.' },
-        { status: 413 }
-      )
-    }
-    
+    console.error('❌ Save error:', error)
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to save' },
+      { success: false, error: error.message || 'Failed to save data' },
       { status: 500 }
     )
   }
@@ -111,15 +103,15 @@ export async function GET(request: NextRequest) {
     const data = dataStore.get(id)
     
     if (!data) {
-      console.log(`Data not found for ID: ${id}`)
+      console.log(`❌ Data not found for ID: ${id}`)
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
     
-    console.log(`Retrieved data for ID: ${id}`)
+    console.log(`✓ Retrieved data for ID: ${id}`)
     
     return NextResponse.json(data)
   } catch (error) {
-    console.error('Load error:', error)
+    console.error('❌ Load error:', error)
     return NextResponse.json({ error: 'Failed to load' }, { status: 500 })
   }
 }
