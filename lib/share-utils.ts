@@ -1,29 +1,27 @@
 import { SiteData } from './store'
+import { upload } from '@vercel/blob/client'
 
-// Upload data directly to Vercel Blob from client
+// Upload data directly to Vercel Blob from client using @vercel/blob/client
 export async function saveAndGetShortLink(data: SiteData): Promise<string | null> {
   try {
     const dataSize = JSON.stringify(data).length
     const dataSizeMB = (dataSize / 1024 / 1024).toFixed(2)
     console.log(`Uploading ${dataSizeMB}MB directly to Vercel Blob...`)
     
-    // Generate a random ID
-    const id = Math.random().toString(36).substring(2, 10)
+    // Get upload URL
+    const urlResponse = await fetch('/api/upload-url')
+    const { id, filename } = await urlResponse.json()
     
-    // Upload directly to Vercel Blob via client upload endpoint
+    // Create blob from data
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
     
-    const response = await fetch(`/api/upload?filename=anniversary-${id}.json`, {
-      method: 'POST',
-      body: blob,
+    // Upload directly to Vercel Blob using client SDK
+    const result = await upload(filename, blob, {
+      access: 'public',
+      handleUploadUrl: '/api/upload',
     })
     
-    if (!response.ok) {
-      throw new Error(`Upload failed: ${response.status}`)
-    }
-    
-    const result = await response.json()
-    console.log('✓ Uploaded to Blob:', result)
+    console.log('✓ Uploaded to Blob:', result.url)
     
     // Return the share link
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
