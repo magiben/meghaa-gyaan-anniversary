@@ -1,4 +1,4 @@
-import { setSessionData, updateSessionData } from './session-store'
+import { setSessionData, updateSessionData, getSessionData } from './session-store'
 
 export interface SiteData {
   countdownTexts: string[]
@@ -87,45 +87,48 @@ const DEFAULT_DATA: SiteData = {
   passwordProtected: false,
 }
 
-const STORAGE_KEY = 'anniversary-site-data'
-
+// Get site data - ONLY from session, NO localStorage
 export function getSiteData(): SiteData {
   if (typeof window === 'undefined') return DEFAULT_DATA
-  try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      const parsed = JSON.parse(stored)
-      console.log('Loaded from localStorage:', Object.keys(parsed))
-      if (parsed.diaryVideo?.src) {
-        console.log('✓ Video found in localStorage:', parsed.diaryVideo.src.substring(0, 50))
-      } else {
-        console.log('✗ No video in localStorage')
-      }
-      return { ...DEFAULT_DATA, ...parsed }
-    }
-  } catch (error) {
-    console.error('Error loading from localStorage:', error)
+  
+  // Check session storage first
+  const sessionData = getSessionData()
+  if (sessionData) {
+    console.log('✓ Loaded from session storage')
+    return sessionData
   }
-  console.log('Using default data')
-  return DEFAULT_DATA
+  
+  // Return default data
+  console.log('✓ Using default data')
+  const data = { ...DEFAULT_DATA }
+  setSessionData(data)
+  return data
 }
 
+// Save site data - ONLY to session, NO localStorage
 export function saveSiteData(data: Partial<SiteData>): void {
   if (typeof window === 'undefined') return
   
-  // Save to session for immediate use
+  // Update session storage only
   updateSessionData(data)
   
-  console.log('Data updated in session:', Object.keys(data))
+  console.log('✓ Data saved to session:', Object.keys(data))
   window.dispatchEvent(new CustomEvent('site-data-updated'))
 }
 
+// Reset site data
 export function resetSiteData(): void {
   if (typeof window === 'undefined') return
-  localStorage.removeItem(STORAGE_KEY)
+  
+  // Clear session storage
+  const data = { ...DEFAULT_DATA }
+  setSessionData(data)
+  
+  console.log('✓ Data reset to defaults')
   window.dispatchEvent(new CustomEvent('site-data-updated'))
 }
 
+// Get default data
 export function getDefaultData(): SiteData {
   return { ...DEFAULT_DATA }
 }
