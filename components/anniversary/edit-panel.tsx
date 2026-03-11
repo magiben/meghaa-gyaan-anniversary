@@ -33,6 +33,7 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
       const updated = { ...data, ...newData }
       setData(updated as SiteData)
       saveSiteData(updated)
+      console.log('Data saved:', Object.keys(newData))
       onDataChange()
     },
     [data, onDataChange]
@@ -412,18 +413,27 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
                       <label style={labelStyle}>Video (MP4 recommended)</label>
                       <button
                         onClick={() =>
-                          handleFileUpload((url) =>
+                          handleFileUpload((url) => {
+                            console.log('Video uploaded, saving...', url.substring(0, 50))
                             save({ diaryVideo: { ...data.diaryVideo, src: url } })
-                          , 'video')
+                          }, 'video')
                         }
                         style={btnStyle}
                       >
                         {data.diaryVideo.src ? 'Change Video' : 'Upload Video'}
                       </button>
                       {data.diaryVideo.src && (
-                        <p className="mt-1 text-xs" style={{ color: '#4A7C59' }}>
-                          ✓ Video uploaded
-                        </p>
+                        <>
+                          <p className="mt-1 text-xs" style={{ color: '#4A7C59' }}>
+                            ✓ Video uploaded ({(data.diaryVideo.src.length / 1024).toFixed(0)}KB)
+                          </p>
+                          <video
+                            src={data.diaryVideo.src}
+                            controls
+                            className="mt-2 w-full rounded"
+                            style={{ maxHeight: '150px', backgroundColor: '#E8DCCF' }}
+                          />
+                        </>
                       )}
                     </div>
                     <div>

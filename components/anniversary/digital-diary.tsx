@@ -7,6 +7,9 @@ interface DigitalDiaryProps {
 }
 
 export function DigitalDiary({ video }: DigitalDiaryProps) {
+  // Debug: Log video data
+  console.log('DigitalDiary video:', video.src ? `${video.src.substring(0, 50)}... (${video.src.length} chars)` : 'No video')
+  
   return (
     <section className="flex min-h-[80vh] flex-col items-center justify-center px-6 py-20">
       <motion.div
@@ -36,33 +39,38 @@ export function DigitalDiary({ video }: DigitalDiaryProps) {
         >
           <div className="p-3 md:p-4">
             {video.src ? (
-              <video
-                src={video.src}
-                controls
-                autoPlay={video.autoplay}
-                muted={video.autoplay}
-                loop
-                playsInline
-                preload="metadata"
-                className="aspect-video w-full rounded-lg object-cover"
-                style={{ backgroundColor: '#E8DCCF' }}
-                onError={(e) => {
-                  console.error('Video failed to load:', e)
-                  const target = e.target as HTMLVideoElement
-                  target.style.display = 'none'
-                  const errorDiv = document.createElement('div')
-                  errorDiv.className = 'flex aspect-video w-full items-center justify-center rounded-lg'
-                  errorDiv.style.backgroundColor = '#E8DCCF'
-                  errorDiv.innerHTML = `
-                    <div class="flex flex-col items-center gap-2 opacity-60 p-4 text-center">
-                      <span style="font-family: var(--font-dancing); color: #8B6F5C; font-size: 0.9rem;">
-                        Video failed to load. Try using a smaller video file (under 5MB) or a different format (MP4 recommended).
-                      </span>
-                    </div>
-                  `
-                  target.parentElement?.appendChild(errorDiv)
-                }}
-              />
+              <>
+                <video
+                  key={video.src.substring(0, 100)}
+                  src={video.src}
+                  controls
+                  autoPlay={video.autoplay}
+                  muted={video.autoplay}
+                  loop
+                  playsInline
+                  preload="metadata"
+                  className="aspect-video w-full rounded-lg object-cover"
+                  style={{ backgroundColor: '#E8DCCF' }}
+                  onLoadStart={() => console.log('Video loading started')}
+                  onLoadedData={() => console.log('Video loaded successfully')}
+                  onError={(e) => {
+                    console.error('Video failed to load:', e)
+                    const target = e.target as HTMLVideoElement
+                    target.style.display = 'none'
+                    const errorDiv = document.createElement('div')
+                    errorDiv.className = 'flex aspect-video w-full items-center justify-center rounded-lg'
+                    errorDiv.style.backgroundColor = '#E8DCCF'
+                    errorDiv.innerHTML = `
+                      <div class="flex flex-col items-center gap-2 opacity-60 p-4 text-center">
+                        <span style="font-family: var(--font-dancing); color: #8B6F5C; font-size: 0.9rem;">
+                          Video failed to load. Try using a smaller video file (under 5MB) or a different format (MP4 recommended).
+                        </span>
+                      </div>
+                    `
+                    target.parentElement?.appendChild(errorDiv)
+                  }}
+                />
+              </>
             ) : (
               <div
                 className="flex aspect-video w-full items-center justify-center rounded-lg"
