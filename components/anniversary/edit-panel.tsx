@@ -53,17 +53,19 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
         return
       }
       
+      setSaveMessage('⏳ Uploading your media to server...')
+      
       const shareLink = await saveAndGetShortLink(data)
       if (shareLink) {
         await navigator.clipboard.writeText(shareLink)
-        setSaveMessage('✓ Short link copied! Send this to your partner.')
-        setTimeout(() => setSaveMessage(''), 5000)
+        setSaveMessage('✓ Saved online! Link copied. All your media is now stored on the server with unlimited space.')
+        setTimeout(() => setSaveMessage(''), 8000)
       } else {
-        setSaveMessage('✗ Failed to generate link. Please try again or refresh the page.')
+        setSaveMessage('✗ Failed to save online. Please check your internet connection and try again.')
       }
     } catch (error: any) {
       console.error('Share link error:', error)
-      setSaveMessage('✗ Failed to generate share link. Check your internet connection.')
+      setSaveMessage('✗ Failed to save online. Check your internet connection.')
     } finally {
       setIsGeneratingLink(false)
     }

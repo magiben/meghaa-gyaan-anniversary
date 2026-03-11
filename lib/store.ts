@@ -110,38 +110,11 @@ export function getSiteData(): SiteData {
 
 export function saveSiteData(data: Partial<SiteData>): void {
   if (typeof window === 'undefined') return
-  try {
-    const current = getSiteData()
-    const updated = { ...current, ...data }
-    const jsonString = JSON.stringify(updated)
-    const sizeInMB = (jsonString.length / 1024 / 1024).toFixed(2)
-    console.log('Saving to localStorage:', Object.keys(data), `Total size: ${sizeInMB}MB`)
-    
-    // Check if size is too large (most browsers limit to 5-10MB)
-    if (jsonString.length > 5 * 1024 * 1024) {
-      alert(`Storage is getting full (${sizeInMB}MB). Please:\n1. Use smaller images (compress them)\n2. Use shorter videos (under 2MB)\n3. Or use "Generate Share Link" to save online instead`)
-      return
-    }
-    
-    localStorage.setItem(STORAGE_KEY, jsonString)
-    
-    // Verify it was saved
-    const saved = localStorage.getItem(STORAGE_KEY)
-    if (saved) {
-      console.log(`✓ Data saved successfully (${sizeInMB}MB)`)
-    } else {
-      console.error('✗ Failed to save to localStorage')
-    }
-    
-    window.dispatchEvent(new CustomEvent('site-data-updated'))
-  } catch (error: any) {
-    console.error('Error saving to localStorage:', error)
-    if (error.name === 'QuotaExceededError') {
-      alert('Storage is full! Please:\n1. Compress your images more\n2. Use a smaller video (under 2MB)\n3. Or click "Generate Share Link" to save online')
-    } else {
-      alert('Failed to save. Please try compressing your files more.')
-    }
-  }
+  
+  // Don't use localStorage anymore - it's too small
+  // Data will be saved when user clicks "Generate Share Link"
+  console.log('Data updated in memory:', Object.keys(data))
+  window.dispatchEvent(new CustomEvent('site-data-updated'))
 }
 
 export function resetSiteData(): void {
