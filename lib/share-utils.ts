@@ -1,21 +1,26 @@
 import { SiteData } from './store'
+import LZString from 'lz-string'
 
-// Simple solution: Store in URL hash (no server needed!)
+// Create short share link with compressed data
 export async function saveAndGetShortLink(data: SiteData): Promise<string | null> {
   try {
     const dataSize = JSON.stringify(data).length
     const dataSizeMB = (dataSize / 1024 / 1024).toFixed(2)
     console.log(`Creating share link with ${dataSizeMB}MB of data...`)
     
-    // Compress and encode data
+    // Compress data using LZ-String (much better compression!)
     const jsonString = JSON.stringify(data)
-    const compressed = btoa(encodeURIComponent(jsonString))
+    const compressed = LZString.compressToEncodedURIComponent(jsonString)
     
-    // Create share link with data in URL hash
+    console.log(`Original size: ${jsonString.length} chars`)
+    console.log(`Compressed size: ${compressed.length} chars`)
+    console.log(`Compression ratio: ${((1 - compressed.length / jsonString.length) * 100).toFixed(1)}%`)
+    
+    // Create share link with compressed data in URL hash
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
     const shareLink = `${baseUrl}#${compressed}`
     
-    console.log(`✓ Share link created (${shareLink.length} chars)`)
+    console.log(`✓ Share link created (${shareLink.length} total chars)`)
     
     return shareLink
   } catch (error: any) {
@@ -28,9 +33,12 @@ export async function saveAndGetShortLink(data: SiteData): Promise<string | null
 // Load data from URL hash
 export async function loadDataFromShortId(id: string): Promise<SiteData | null> {
   try {
-    // Decode from URL hash
-    const decoded = decodeURIComponent(atob(id))
-    const data = JSON.parse(decoded)
+    // Decompress from URL hash
+    const decompressed = LZString.decompressFromEncodedURIComponent(id)
+    if (!decompressed) {
+      throw new Error('Failed to decompress data')
+    }
+    const data = JSON.parse(decompressed)
     return data
   } catch (error) {
     console.error('Failed to load data:', error)
