@@ -1,3 +1,5 @@
+import { setSessionData, updateSessionData } from './session-store'
+
 export interface SiteData {
   countdownTexts: string[]
   nicknames: string[]
@@ -111,9 +113,10 @@ export function getSiteData(): SiteData {
 export function saveSiteData(data: Partial<SiteData>): void {
   if (typeof window === 'undefined') return
   
-  // Don't use localStorage anymore - it's too small
-  // Data will be saved when user clicks "Generate Share Link"
-  console.log('Data updated in memory:', Object.keys(data))
+  // Save to session for immediate use
+  updateSessionData(data)
+  
+  console.log('Data updated in session:', Object.keys(data))
   window.dispatchEvent(new CustomEvent('site-data-updated'))
 }
 

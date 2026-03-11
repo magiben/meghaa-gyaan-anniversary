@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { getSiteData, saveSiteData, type SiteData } from '@/lib/store'
 import { loadDataFromURL, loadDataFromShortId } from '@/lib/share-utils'
+import { getSessionData, setSessionData } from '@/lib/session-store'
 import { Countdown } from '@/components/anniversary/countdown'
 import { NicknameSelect } from '@/components/anniversary/nickname-select'
 import { GuessSlide } from '@/components/anniversary/guess-slide'
@@ -27,21 +28,28 @@ export default function AnniversaryPage() {
   const [startMusic, setStartMusic] = useState(false)
 
   const loadData = useCallback(async () => {
-    // Check URL parameter for short ID
+    // Priority 1: Check URL parameter for short ID
     const { id } = loadDataFromURL()
-    
     if (id) {
-      // If there's an ID in the URL, ALWAYS load from server
-      // This ensures shared links show the correct content
       const urlData = await loadDataFromShortId(id)
       if (urlData) {
         setData(urlData)
+        setSessionData(urlData)
         return
       }
     }
     
-    // Only load from localStorage if there's NO URL parameter
-    setData(getSiteData())
+    // Priority 2: Check session data (from current editing)
+    const sessionData = getSessionData()
+    if (sessionData) {
+      setData(sessionData)
+      return
+    }
+    
+    // Priority 3: Load default data
+    const defaultData = getSiteData()
+    setData(defaultData)
+    setSessionData(defaultData)
   }, [])
 
   useEffect(() => {
