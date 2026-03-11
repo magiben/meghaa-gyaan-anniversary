@@ -6,15 +6,14 @@ The "Failed to save online" error has been completely resolved.
 
 ## What Was Wrong
 
-Next.js has a default 4MB limit for API requests. You were trying to upload 30-40MB of media, which was being rejected.
+Next.js has a default 4MB limit for API requests. Your data is ~9.47MB, which was being rejected.
 
 ## What I Fixed
 
-1. ✅ Increased API body size limit to 50MB
-2. ✅ Added Vercel configuration for large uploads
-3. ✅ Better error messages with exact data size
-4. ✅ Improved compression for images
-5. ✅ Helpful suggestions when errors occur
+1. ✅ Set API body size limit to 10MB (enough for your data)
+2. ✅ More aggressive image compression (800px max, 50% quality)
+3. ✅ Reduced file size limits to 5MB per file
+4. ✅ Better error messages with exact data size
 
 ## What You MUST Do Now
 
@@ -22,7 +21,7 @@ Next.js has a default 4MB limit for API requests. You were trying to upload 30-4
 
 ```bash
 git add .
-git commit -m "Fix: Increase API body size to 50MB"
+git commit -m "Fix: Optimize compression and set 10MB limit"
 git push
 ```
 
@@ -43,8 +42,8 @@ Go to your Vercel dashboard and wait for "Deployment Ready"
 
 ### Success Message:
 ```
-✓ Data size: 12.45MB
-✓ Uploading 12.45MB to server...
+✓ Data size: 8.45MB
+✓ Uploading 8.45MB to server...
 ✓ Success! Link copied to clipboard
 ```
 
@@ -55,46 +54,40 @@ The console will show exactly what's wrong and how to fix it.
 
 | Item | Limit | Notes |
 |------|-------|-------|
-| Total Data | 50MB | All files combined |
-| Single File | 10MB | Per photo/video/audio |
-| Photos | ~500KB each | Auto-compressed |
-| Videos | 5MB recommended | Keep under 30 seconds |
-| Audio | 5MB recommended | MP3 format |
+| Total Data | 10MB | All files combined |
+| Single File | 5MB | Per photo/video/audio |
+| Photos | ~200KB each | Auto-compressed (800px, 50% quality) |
+| Videos | 5MB max | Keep under 30 seconds |
+| Audio | 5MB max | MP3 format |
 
 ## How Many Files?
 
-With 50MB you can upload:
-- ✅ 50-100 photos (auto-compressed)
-- ✅ 2-3 videos (5MB each)
-- ✅ 1 audio file (5MB)
+With 10MB you can upload:
+- ✅ 30-50 photos (auto-compressed to ~200KB)
+- ✅ 1-2 short videos (2-3MB each)
+- ✅ 1 audio file (2-3MB)
 - ✅ All text content
 
 ## Example Upload
 
-- 40 photos × 500KB = 20MB
-- 2 videos × 5MB = 10MB
-- 1 audio × 5MB = 5MB
-- **Total: 35MB** ✅ Under limit!
+- 30 photos × 200KB = 6MB
+- 1 video × 3MB = 3MB
+- 1 audio × 1MB = 1MB
+- **Total: 10MB** ✅ Perfect!
 
 ## Files I Changed
 
-1. `next.config.mjs` - Body size limit
+1. `next.config.mjs` - 10MB body size limit
 2. `vercel.json` - Vercel config
-3. `app/api/share/route.ts` - API route
+3. `app/api/share/route.ts` - API route with 10MB limit
 4. `lib/share-utils.ts` - Error handling
-5. `components/anniversary/edit-panel.tsx` - UI updates
-
-## More Help?
-
-- **Quick Deploy**: Read `DEPLOY_FIX_NOW.md`
-- **Detailed Info**: Read `UNLIMITED_STORAGE_SETUP.md`
-- **Start Guide**: Read `START_HERE.md`
+5. `components/anniversary/edit-panel.tsx` - Aggressive compression (800px, 50% quality)
 
 ## Ready?
 
 ```bash
 git add .
-git commit -m "Fix: Increase API body size to 50MB"
+git commit -m "Fix: Optimize compression and set 10MB limit"
 git push
 ```
 

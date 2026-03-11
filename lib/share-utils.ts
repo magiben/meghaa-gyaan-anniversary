@@ -10,8 +10,8 @@ export async function saveAndGetShortLink(data: SiteData): Promise<string | null
   const dataSizeMB = (dataSize / 1024 / 1024).toFixed(2)
   console.log(`Preparing to upload ${dataSizeMB}MB of data...`)
   
-  if (dataSize > 50 * 1024 * 1024) {
-    alert(`Your data is too large (${dataSizeMB}MB). Maximum is 50MB. Please:\n\n1. Remove some photos/videos\n2. Use shorter videos\n3. Compress images more\n\nCurrent data breakdown:\n- Photos: ${data.photos.filter(p => p.src).length}\n- Video: ${data.diaryVideo.src ? 'Yes' : 'No'}\n- Memories: ${data.memoryBook.filter(m => m.src).length}`)
+  if (dataSize > 10 * 1024 * 1024) {
+    alert(`Your data is too large (${dataSizeMB}MB). Maximum is 10MB. Please:\n\n1. Remove some photos/videos\n2. Use shorter videos\n3. Compress images more\n\nCurrent data breakdown:\n- Photos: ${data.photos.filter(p => p.src).length}\n- Video: ${data.diaryVideo.src ? 'Yes' : 'No'}\n- Memories: ${data.memoryBook.filter(m => m.src).length}`)
     return null
   }
   

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Configure route to accept large payloads (50MB)
+// Configure route to accept payloads up to 10MB
 export const runtime = 'nodejs'
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic'
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '50mb',
+      sizeLimit: '10mb',
     },
   },
 }
@@ -32,9 +32,9 @@ export async function POST(request: NextRequest) {
   try {
     // Check content length
     const contentLength = request.headers.get('content-length')
-    if (contentLength && parseInt(contentLength) > 50 * 1024 * 1024) {
+    if (contentLength && parseInt(contentLength) > 10 * 1024 * 1024) {
       return NextResponse.json(
-        { success: false, error: 'Data too large. Maximum 50MB allowed.' },
+        { success: false, error: 'Data too large. Maximum 10MB allowed.' },
         { status: 413 }
       )
     }
@@ -52,9 +52,9 @@ export async function POST(request: NextRequest) {
     const dataSize = JSON.stringify(data).length
     console.log(`Received data size: ${(dataSize / 1024 / 1024).toFixed(2)}MB`)
     
-    if (dataSize > 50 * 1024 * 1024) {
+    if (dataSize > 10 * 1024 * 1024) {
       return NextResponse.json(
-        { success: false, error: `Data too large (${(dataSize / 1024 / 1024).toFixed(2)}MB). Maximum 50MB allowed.` },
+        { success: false, error: `Data too large (${(dataSize / 1024 / 1024).toFixed(2)}MB). Maximum 10MB allowed.` },
         { status: 413 }
       )
     }
