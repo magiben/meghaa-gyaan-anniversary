@@ -124,14 +124,52 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
           return
         }
         
-        // Show size warning for files over 5MB
-        if (file.size > 5 * 1024 * 1024) {
-          const proceed = confirm(
-            `This file is ${(file.size / 1024 / 1024).toFixed(2)}MB. Large files may take time to save and load. Continue?`
-          )
-          if (!proceed) return
+        // For images, compress them
+        if (fileType === 'image' && file.type.startsWith('image/')) {
+          const img = new Image()
+          const reader = new FileReader()
+          
+          reader.onload = (ev) => {
+            img.onload = () => {
+              // Create canvas to compress image
+              const canvas = document.createElement('canvas')
+              let width = img.width
+              let height = img.height
+              
+              // Resize if too large
+              const maxDimension = 1200
+              if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                  height = (height / width) * maxDimension
+                  width = maxDimension
+                } else {
+                  width = (width / height) * maxDimension
+                  height = maxDimension
+                }
+              }
+              
+              canvas.width = width
+              canvas.height = height
+              
+              const ctx = canvas.getContext('2d')
+              ctx?.drawImage(img, 0, 0, width, height)
+              
+              // Compress to JPEG with quality 0.7
+              const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7)
+              callback(compressedDataUrl)
+            }
+            img.src = ev.target?.result as string
+          }
+          
+          reader.onerror = () => {
+            alert('Failed to read file. Please try a different file.')
+          }
+          
+          reader.readAsDataURL(file)
+          return
         }
         
+        // For videos and other files, use normal upload
         const reader = new FileReader()
         reader.onload = (ev) => {
           const result = ev.target?.result as string
