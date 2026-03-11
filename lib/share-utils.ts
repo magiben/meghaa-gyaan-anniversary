@@ -5,39 +5,77 @@ export async function saveAndGetShortLink(data: SiteData): Promise<string | null
   const maxRetries = 3
   let lastError: any = null
   
+  // Check data size before sending
+  const dataSize = JSON.stringify(data).length
+  const dataSizeMB = (dataSize / 1024 / 1024).toFixed(2)
+  console.log(`Preparing to upload ${dataSizeMB}MB of data...`)
+  
+  if (dataSize > 50 * 1024 * 1024) {
+    alert(`Your data is too large (${dataSizeMB}MB). Maximum is 50MB. Please:\n\n1. Remove some photos/videos\n2. Use shorter videos\n3. Compress images more\n\nCurrent data breakdown:\n- Photos: ${data.photos.filter(p => p.src).length}\n- Video: ${data.diaryVideo.src ? 'Yes' : 'No'}\n- Memories: ${data.memoryBook.filter(m => m.src).length}`)
+    return null
+  }
+  
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
+      console.log(`Attempt ${attempt}/${maxRetries}: Uploading ${dataSizeMB}MB to /api/share...`)
+      
       const response = await fetch('/api/share', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       })
       
+      console.log(`Response status: ${response.status} ${response.statusText}`)
+      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        throw new Error(errorData.error || `Server error: ${response.status}`)
+        const errorText = await response.text()
+        console.error(`Server error: ${response.status} - ${errorText}`)
+        
+        // Handle specific error codes
+        if (response.status === 413) {
+          alert(`Data too large (${dataSizeMB}MB). Please reduce your media:\n\n1. Remove some photos/videos\n2. Use shorter videos\n3. The system auto-compresses images, but you may need fewer files`)
+          return null
+        }
+        
+        if (response.status === 404) {
+          alert('API route not found. Please make sure you have deployed the latest code:\n\ngit add .\ngit commit -m "Update API"\ngit push')
+          return null
+        }
+        
+        throw new Error(`Server error: ${response.status}`)
       }
       
       const result = await response.json()
+      console.log('Server response:', result)
       
       if (result.success && result.id) {
         const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-        return `${baseUrl}?id=${result.id}`
+        const shareLink = `${baseUrl}?id=${result.id}`
+        console.log(`✓ Success! Generated share link: ${shareLink}`)
+        return shareLink
       }
       
-      throw new Error('Invalid response from server')
+      throw new Error(result.error || 'Invalid response from server')
     } catch (error: any) {
       console.error(`Attempt ${attempt} failed:`, error)
       lastError = error
       
+      // Don't retry for specific errors
+      if (error.message?.includes('413') || error.message?.includes('404')) {
+        return null
+      }
+      
       // Wait before retrying (exponential backoff)
       if (attempt < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt))
+        const waitTime = 1000 * attempt
+        console.log(`Waiting ${waitTime}ms before retry...`)
+        await new Promise(resolve => setTimeout(resolve, waitTime))
       }
     }
   }
   
   console.error('All retry attempts failed:', lastError)
+  alert(`Failed to save after ${maxRetries} attempts.\n\nError: ${lastError?.message || 'Unknown error'}\n\nPlease check:\n1. Your internet connection\n2. Browser console (F12) for details\n3. That you've deployed the latest code`)
   return null
 }
 

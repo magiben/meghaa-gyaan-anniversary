@@ -53,19 +53,24 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
         return
       }
       
-      setSaveMessage('⏳ Uploading your media to server...')
+      // Calculate and show data size
+      const dataSize = JSON.stringify(data).length
+      const dataSizeMB = (dataSize / 1024 / 1024).toFixed(2)
+      console.log(`Data size: ${dataSizeMB}MB`)
+      
+      setSaveMessage(`⏳ Uploading ${dataSizeMB}MB to server...`)
       
       const shareLink = await saveAndGetShortLink(data)
       if (shareLink) {
         await navigator.clipboard.writeText(shareLink)
-        setSaveMessage('✓ Saved online! Link copied. All your media is now stored on the server with unlimited space.')
-        setTimeout(() => setSaveMessage(''), 8000)
+        setSaveMessage(`✓ Success! Link copied to clipboard. Your ${dataSizeMB}MB of media is now stored on the server.`)
+        setTimeout(() => setSaveMessage(''), 10000)
       } else {
-        setSaveMessage('✗ Failed to save online. Please check your internet connection and try again.')
+        setSaveMessage('✗ Failed to save. See error message above.')
       }
     } catch (error: any) {
       console.error('Share link error:', error)
-      setSaveMessage('✗ Failed to save online. Check your internet connection.')
+      setSaveMessage(`✗ Error: ${error.message || 'Unknown error'}`)
     } finally {
       setIsGeneratingLink(false)
     }
