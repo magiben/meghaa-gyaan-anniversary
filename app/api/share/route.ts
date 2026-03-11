@@ -1,18 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-// In-memory store for development
-const dataStore = new Map<string, any>()
-
-// Also use localStorage-like persistence for serverless
-// This helps maintain data between function invocations
-let persistentStore: Map<string, any> | null = null
-
-function getStore(): Map<string, any> {
-  if (!persistentStore) {
-    persistentStore = new Map<string, any>()
-  }
-  return persistentStore
-}
+import { put, head } from '@vercel/blob'
 
 // Generate a short random ID
 function generateShortId(): string {
@@ -37,12 +24,20 @@ export async function POST(request: NextRequest) {
     }
     
     // Generate unique short ID
-    const store = getStore()
     let shortId = generateShortId()
     let attempts = 0
-    while (store.has(shortId) && attempts < 10) {
-      shortId = generateShortId()
-      attempts++
+    
+    // Check if ID already exists
+    while (attempts < 10) {
+      try {
+        await head(`anniversary-${shortId}.json`)
+        // ID exists, generate new one
+        shortId = generateShortId()
+        attempts++
+      } catch {
+        // ID doesn't exist, we can use it
+        break
+      }
     }
     
     if (attempts >= 10) {
@@ -52,11 +47,13 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    // Store data in both stores for redundancy
-    store.set(shortId, data)
-    dataStore.set(shortId, data)
+    // Store data in Vercel Blob
+    const blob = await put(`anniversary-${shortId}.json`, JSON.stringify(data), {
+      access: 'public',
+      contentType: 'application/json',
+    })
     
-    console.log(`Saved data with ID: ${shortId}`)
+    console.log(`Saved data with ID: ${shortId}, URL: ${blob.url}`)
     
     return NextResponse.json({ success: true, id: shortId })
   } catch (error: any) {
@@ -78,15 +75,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'ID required' }, { status: 400 })
     }
     
-    // Try both stores
-    const store = getStore()
-    let data = store.get(id) || dataStore.get(id)
+    // Fetch from Vercel Blob
+    const response = await fetch(`${process.env.BLOB_READ_WRITE_TOKEN ? 'https://blob.vercel-storage.com' : ''}/anniversary-${id}.json`)
     
-    if (!data) {
+    if (!response.ok) {
       console.log(`Data not found for ID: ${id}`)
       return NextResponse.json({ error: 'Not found' }, { status: 404 })
     }
     
+    const data = await response.json()
     console.log(`Retrieved data for ID: ${id}`)
     
     return NextResponse.json(data)
