@@ -8,13 +8,11 @@ export async function saveAndGetShortLink(data: SiteData): Promise<string | null
   // NO SIZE CHECK - just upload it
   const dataSize = JSON.stringify(data).length
   const dataSizeMB = (dataSize / 1024 / 1024).toFixed(2)
-  console.log(`Uploading ${dataSizeMB}MB of data...`)
-  
-  // Removed size check - let the server handle it
+  console.log(`Uploading ${dataSizeMB}MB of data to Vercel Blob...`)
   
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      console.log(`Attempt ${attempt}/${maxRetries}: Uploading ${dataSizeMB}MB to /api/share...`)
+      console.log(`Attempt ${attempt}/${maxRetries}: Uploading to /api/share...`)
       
       const response = await fetch('/api/share', {
         method: 'POST',
@@ -27,18 +25,6 @@ export async function saveAndGetShortLink(data: SiteData): Promise<string | null
       if (!response.ok) {
         const errorText = await response.text()
         console.error(`Server error: ${response.status} - ${errorText}`)
-        
-        // Handle specific error codes
-        if (response.status === 413) {
-          alert(`Data too large (${dataSizeMB}MB). Please reduce your media:\n\n1. Remove some photos/videos\n2. Use shorter videos\n3. The system auto-compresses images, but you may need fewer files`)
-          return null
-        }
-        
-        if (response.status === 404) {
-          alert('API route not found. Please make sure you have deployed the latest code:\n\ngit add .\ngit commit -m "Update API"\ngit push')
-          return null
-        }
-        
         throw new Error(`Server error: ${response.status}`)
       }
       
@@ -57,11 +43,6 @@ export async function saveAndGetShortLink(data: SiteData): Promise<string | null
       console.error(`Attempt ${attempt} failed:`, error)
       lastError = error
       
-      // Don't retry for specific errors
-      if (error.message?.includes('413') || error.message?.includes('404')) {
-        return null
-      }
-      
       // Wait before retrying (exponential backoff)
       if (attempt < maxRetries) {
         const waitTime = 1000 * attempt
@@ -72,7 +53,7 @@ export async function saveAndGetShortLink(data: SiteData): Promise<string | null
   }
   
   console.error('All retry attempts failed:', lastError)
-  alert(`Failed to save after ${maxRetries} attempts.\n\nError: ${lastError?.message || 'Unknown error'}\n\nPlease check:\n1. Your internet connection\n2. Browser console (F12) for details\n3. That you've deployed the latest code`)
+  alert(`Failed to save after ${maxRetries} attempts.\n\nError: ${lastError?.message || 'Unknown error'}\n\nPlease check:\n1. Your internet connection\n2. Browser console (F12) for details`)
   return null
 }
 
