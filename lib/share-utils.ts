@@ -1,30 +1,44 @@
 import { SiteData } from './store'
 
-// Save data to server and get short ID
+// Save data to server and get short ID with retry logic
 export async function saveAndGetShortLink(data: SiteData): Promise<string | null> {
-  try {
-    const response = await fetch('/api/share', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    })
-    
-    if (!response.ok) {
-      return null
+  const maxRetries = 3
+  let lastError: any = null
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch('/api/share', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `Server error: ${response.status}`)
+      }
+      
+      const result = await response.json()
+      
+      if (result.success && result.id) {
+        const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+        return `${baseUrl}?id=${result.id}`
+      }
+      
+      throw new Error('Invalid response from server')
+    } catch (error: any) {
+      console.error(`Attempt ${attempt} failed:`, error)
+      lastError = error
+      
+      // Wait before retrying (exponential backoff)
+      if (attempt < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt))
+      }
     }
-    
-    const result = await response.json()
-    
-    if (result.success && result.id) {
-      const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
-      return `${baseUrl}?id=${result.id}`
-    }
-    
-    return null
-  } catch (error) {
-    console.error('Failed to save and get short link:', error)
-    return null
   }
+  
+  console.error('All retry attempts failed:', lastError)
+  return null
 }
 
 // Load data from server using short ID

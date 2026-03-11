@@ -60,6 +60,21 @@ Use online tools like TinyPNG (for images) or HandBrake (for videos) to compress
 **Q: How long is the short link?**  
 A: Very short! Just your website URL + 8 characters. Example: `yoursite.com?id=aB3xY9zK`
 
+**Q: "Generate Share Link" shows "Failed to generate link"**  
+A: This has been fixed with automatic retry logic. If it still fails:
+1. Check your internet connection
+2. Refresh the page and try again
+3. Make sure you've uploaded some content first
+4. Try compressing your images/videos if they're very large
+
+**Q: Images uploaded but not showing in placeholders**  
+A: This has been fixed with better validation. If images still don't show:
+1. Use JPEG or PNG format (recommended)
+2. Make sure file is under 10MB
+3. Try compressing the image
+4. Re-upload the image
+5. Check the small preview thumbnail appears after upload
+
 **Q: I clicked my friend's link but see my old photos instead of theirs**  
 A: This was a bug that's now fixed! The link should always show the correct content. If you still see old content:
 1. Clear your browser cache
@@ -78,8 +93,8 @@ A: The link works as long as your website is deployed. If you redeploy, you may 
 **Q: My partner says the link doesn't work**  
 A: Make sure they're clicking the complete link. Try sending it again or test it yourself first.
 
-**Q: The "Generate Share Link" button says "Failed"**  
-A: Try again. If it keeps failing, check your internet connection or try refreshing the page.
+**Q: Video uploaded but won't play**  
+A: See VIDEO_TROUBLESHOOTING.md for detailed video help. Quick fix: Use MP4 format, compress to under 5MB.
 
 ## Need Help?
 

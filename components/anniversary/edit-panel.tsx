@@ -42,16 +42,24 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
     setIsGeneratingLink(true)
     setSaveMessage('')
     try {
+      // Validate data before sending
+      if (!data) {
+        setSaveMessage('✗ No data to share. Please add some content first.')
+        setIsGeneratingLink(false)
+        return
+      }
+      
       const shareLink = await saveAndGetShortLink(data)
       if (shareLink) {
-        navigator.clipboard.writeText(shareLink)
+        await navigator.clipboard.writeText(shareLink)
         setSaveMessage('✓ Short link copied! Send this to your partner.')
         setTimeout(() => setSaveMessage(''), 5000)
       } else {
-        setSaveMessage('✗ Failed to generate link. Please try again.')
+        setSaveMessage('✗ Failed to generate link. Please try again or refresh the page.')
       }
-    } catch (error) {
-      setSaveMessage('✗ Failed to generate share link')
+    } catch (error: any) {
+      console.error('Share link error:', error)
+      setSaveMessage('✗ Failed to generate share link. Check your internet connection.')
     } finally {
       setIsGeneratingLink(false)
     }
@@ -69,13 +77,42 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
     setIsOpen(true)
   }
 
-  const handleFileUpload = (callback: (url: string) => void) => {
+  const handleFileUpload = (callback: (url: string) => void, fileType?: 'image' | 'video' | 'audio') => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = 'image/*,video/*,audio/*'
+    
+    // Set specific accept based on file type
+    if (fileType === 'video') {
+      input.accept = 'video/mp4,video/webm,video/ogg'
+    } else if (fileType === 'image') {
+      input.accept = 'image/jpeg,image/jpg,image/png,image/gif,image/webp'
+    } else if (fileType === 'audio') {
+      input.accept = 'audio/mpeg,audio/mp3,audio/wav,audio/ogg'
+    } else {
+      input.accept = 'image/*,video/*,audio/*'
+    }
+    
     input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (file) {
+        // Validate video format
+        if (fileType === 'video') {
+          const validFormats = ['video/mp4', 'video/webm', 'video/ogg']
+          if (!validFormats.includes(file.type)) {
+            alert('Please use MP4, WebM, or OGG video format. MP4 is recommended for best compatibility.')
+            return
+          }
+        }
+        
+        // Validate image format
+        if (fileType === 'image') {
+          const validFormats = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+          if (!validFormats.some(format => file.type.includes(format.split('/')[1]))) {
+            alert('Please use JPEG, PNG, GIF, or WebP image format.')
+            return
+          }
+        }
+        
         // Check file size (10MB = 10 * 1024 * 1024 bytes)
         const maxSize = 10 * 1024 * 1024
         if (file.size > maxSize) {
@@ -86,14 +123,22 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
         // Show size warning for files over 5MB
         if (file.size > 5 * 1024 * 1024) {
           const proceed = confirm(
-            `This file is ${(file.size / 1024 / 1024).toFixed(2)}MB. Large files may take time to save. Continue?`
+            `This file is ${(file.size / 1024 / 1024).toFixed(2)}MB. Large files may take time to save and load. Continue?`
           )
           if (!proceed) return
         }
         
         const reader = new FileReader()
         reader.onload = (ev) => {
-          callback(ev.target?.result as string)
+          const result = ev.target?.result as string
+          if (result && result.startsWith('data:')) {
+            callback(result)
+          } else {
+            alert('Failed to read file. Please try again.')
+          }
+        }
+        reader.onerror = () => {
+          alert('Failed to read file. Please try a different file.')
         }
         reader.readAsDataURL(file)
       }
@@ -303,7 +348,7 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
                 {/* Photos Tab */}
                 {activeTab === 'photos' && (
                   <>
-                    <p className="text-xs" style={{ color: '#8B6F5C' }}>Anniversary reveal photos</p>
+                    <p className="text-xs" style={{ color: '#8B6F5C' }}>Anniversary reveal photos (JPEG/PNG recommended)</p>
                     {data.photos.map((photo, i) => (
                       <div
                         key={i}
@@ -317,7 +362,7 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
                                 const photos = [...data.photos]
                                 photos[i] = { ...photos[i], src: url }
                                 save({ photos })
-                              })
+                              }, 'image')
                             }
                             style={btnStyle}
                           >
@@ -330,7 +375,9 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
                                 backgroundImage: `url(${photo.src})`,
                                 backgroundSize: 'cover',
                                 backgroundPosition: 'center',
+                                backgroundColor: '#E8DCCF',
                               }}
+                              title="Preview"
                             />
                           )}
                         </div>
@@ -362,17 +409,22 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
                 {activeTab === 'diary' && (
                   <>
                     <div>
-                      <label style={labelStyle}>Video</label>
+                      <label style={labelStyle}>Video (MP4 recommended)</label>
                       <button
                         onClick={() =>
                           handleFileUpload((url) =>
                             save({ diaryVideo: { ...data.diaryVideo, src: url } })
-                          )
+                          , 'video')
                         }
                         style={btnStyle}
                       >
                         {data.diaryVideo.src ? 'Change Video' : 'Upload Video'}
                       </button>
+                      {data.diaryVideo.src && (
+                        <p className="mt-1 text-xs" style={{ color: '#4A7C59' }}>
+                          ✓ Video uploaded
+                        </p>
+                      )}
                     </div>
                     <div>
                       <label style={labelStyle}>Caption</label>
@@ -393,7 +445,7 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
                           save({ diaryVideo: { ...data.diaryVideo, autoplay: e.target.checked } })
                         }
                       />
-                      <label style={{ ...labelStyle, margin: 0 }}>Autoplay video</label>
+                      <label style={{ ...labelStyle, margin: 0 }}>Autoplay video (muted)</label>
                     </div>
                   </>
                 )}
@@ -414,7 +466,7 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
                                 const memoryBook = [...data.memoryBook]
                                 memoryBook[i] = { ...memoryBook[i], src: url }
                                 save({ memoryBook })
-                              })
+                              }, 'image')
                             }
                             style={btnStyle}
                           >
@@ -429,6 +481,18 @@ export function EditPanel({ onDataChange }: EditPanelProps) {
                           >
                             Remove
                           </button>
+                          {mem.src && (
+                            <div
+                              className="h-10 w-10 rounded"
+                              style={{
+                                backgroundImage: `url(${mem.src})`,
+                                backgroundSize: 'cover',
+                                backgroundPosition: 'center',
+                                backgroundColor: '#E8DCCF',
+                              }}
+                              title="Preview"
+                            />
+                          )}
                         </div>
                         <input
                           type="text"
